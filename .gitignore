@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Entorno virtual
+.venv/
+.env
+
+# uv
+.python-version
+
+# Datos (no versionar datasets)
+data/raw/
+data/processed/
+
+# Modelos serializados
+models/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Linters / formatters
+.ruff_cache/
+.mypy_cache/
+
+# Tests
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Documentación interna
+docs/
+
+# macOS
+.DS_Store
+
+# IDEs
+.idea/
+*.swp
