@@ -9,8 +9,7 @@ Proyecto de consultoría para optimizar el presupuesto de retención de clientes
 ## Estructura del paquete `retention_optimizer`
 | Módulo | Responsabilidad |
 |---|---|
-| `data/` | Carga y limpieza del dataset |
-| `features/` | Feature engineering y selección |
+| `preprocessing/` | Limpieza y feature engineering. `preprocess()` es el punto de entrada; los pipelines individuales viven en `preprocessing/pipelines/` (`cleaning.py`, `feature_engineering.py`) y se combinan en `preprocessing/preprocessing.py` |
 | `models/` | Modelos de churn (clasificación) y CLV (regresión) |
 | `optimization/` | Algoritmo de asignación de presupuesto |
 | `evaluation/` | Métricas y función de coste de negocio |
