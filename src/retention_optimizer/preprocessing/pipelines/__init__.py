@@ -1,1 +1,1 @@
-"""Individual preprocessing pipelines: cleaning and feature engineering."""
+"""Individual preprocessing pipelines: cleaning, feature engineering and encoding."""
