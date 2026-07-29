@@ -11,5 +11,5 @@ from .pipelines.feature_engineering import engineer_features
 
 
 def preprocess(df: pd.DataFrame) -> pd.DataFrame:
-    """Run the full preprocessing pipeline: clean the raw data, then engineer features."""
+    """Run the full preprocessing pipeline: clean, then engineer features."""
     return df.pipe(clean_data).pipe(engineer_features)

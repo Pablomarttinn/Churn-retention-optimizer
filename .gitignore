@@ -20,8 +20,8 @@ build/
 data/raw/
 data/processed/
 
-# Modelos serializados
-models/
+# Modelos serializados (solo la carpeta de la raiz, no src/**/models/)
+/models/
 
 # Jupyter
 .ipynb_checkpoints/
