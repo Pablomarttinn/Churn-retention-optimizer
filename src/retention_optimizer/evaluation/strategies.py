@@ -58,17 +58,44 @@ def _summarize(
     }
 
 
-def _greedy_take(order: np.ndarray, cost: np.ndarray, budget: float) -> np.ndarray:
-    """Walk an ordered list of customers and take them until one does not fit.
+def _greedy_take(
+    order: np.ndarray,
+    net_value: np.ndarray | None,
+    cost: np.ndarray,
+    budget: float,
+) -> np.ndarray:
+    """Walk an ordered list of customers, taking the ones worth paying for.
 
-    Stops at the first customer whose cost exceeds the remaining budget; it
-    does not skip ahead looking for a cheaper one further down. That is the
-    point of the naive strategies: they respect the budget without optimizing
-    against it, leaving the packing gains to the knapsack.
+    Two independent stopping rules, and they behave differently on purpose:
+
+    - **Negative net value: skip, do not stop.** A customer whose action costs
+      more than it recovers is never worth contacting, however high they rank.
+      Net value is not monotone in the `p` or `p * m` ordering, so a cheap
+      profitable customer can sit below an unprofitable one; breaking at the
+      first loss would silently discard them.
+    - **Budget exhausted: stop.** No skipping ahead in search of someone
+      cheaper who would still fit. That is what keeps these strategies naive
+      rankings and leaves the packing gains to the knapsack.
+
+    Args:
+        order: Customer indices in the strategy's ranking order.
+        net_value: Per-customer expected value minus its action cost, computed
+            with the same valuation parameters as the calling strategy, so the
+            profitability threshold moves with those parameters instead of
+            being fixed. `None` disables the filter entirely — used by the
+            random floor, which is meant to know nothing, profitability
+            included.
+        cost: Per-customer action cost.
+        budget: Total budget available.
+
+    Returns:
+        Boolean mask of the selected customers.
     """
     mask = np.zeros(len(cost), dtype=bool)
     spent = 0.0
     for i in order:
+        if net_value is not None and net_value[i] <= 0:
+            continue
         c = float(cost[i])
         if spent + c > budget:
             break
@@ -92,10 +119,17 @@ def strategy_random(
 
     The comparison floor. Any strategy that fails to beat it is not adding
     information, and its margin over this one is what the model is worth.
+
+    Unlike the ranked strategies, this one keeps contacting customers whose net
+    value is negative. That is the point: the floor must know *nothing*, and
+    filtering on profitability would hand it the single most valuable piece of
+    information in the problem. Consequence to expect — past the profitability
+    elbow its value curve turns downwards, which is a true statement about
+    spending at random, not a defect.
     """
     p, m, cost, effectiveness = _prepare(p, m, cost, effectiveness)
     order = np.random.default_rng(seed).permutation(len(p))
-    mask = _greedy_take(order, cost, budget)
+    mask = _greedy_take(order, None, cost, budget)
     return mask, _summarize(mask, p, m, cost, effectiveness, margin_factor, H, d)
 
 
@@ -117,7 +151,8 @@ def strategy_by_churn(
     """
     p, m, cost, effectiveness = _prepare(p, m, cost, effectiveness)
     order = np.argsort(p)[::-1]
-    mask = _greedy_take(order, cost, budget)
+    net = expected_value(p, m, effectiveness, margin_factor, H, d) - cost
+    mask = _greedy_take(order, net, cost, budget)
     return mask, _summarize(mask, p, m, cost, effectiveness, margin_factor, H, d)
 
 
@@ -140,7 +175,8 @@ def strategy_by_priority(
     """
     p, m, cost, effectiveness = _prepare(p, m, cost, effectiveness)
     order = np.argsort(p * m)[::-1]
-    mask = _greedy_take(order, cost, budget)
+    net = expected_value(p, m, effectiveness, margin_factor, H, d) - cost
+    mask = _greedy_take(order, net, cost, budget)
     return mask, _summarize(mask, p, m, cost, effectiveness, margin_factor, H, d)
 
 
