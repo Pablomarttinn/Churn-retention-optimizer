@@ -18,7 +18,13 @@ build/
 
 # Datos (no versionar datasets)
 data/raw/
-data/processed/
+# `data/processed/*` y no `data/processed/`: con la forma de directorio git no
+# desciende dentro y la negacion de abajo nunca se evaluaria.
+data/processed/*
+# Excepcion: el unico fichero que el dashboard lee en runtime. Se versiona para
+# que el deploy no necesite el CSV crudo. Regenerable con
+# scripts/build_dashboard_data.py
+!data/processed/dashboard_data.csv
 
 # Modelos serializados (solo la carpeta de la raiz, no src/**/models/)
 /models/
