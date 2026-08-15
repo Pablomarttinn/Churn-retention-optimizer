@@ -17,6 +17,8 @@ def plot_value_curve_plotly(
     strategy_colors: dict,
     current_budget: float,
     margin_factor: float,
+    dashes: dict | None = None,
+    subtitle: str | None = None,
 ) -> go.Figure:
     """Net value retained against budget, one line per strategy.
 
@@ -33,10 +35,15 @@ def plot_value_curve_plotly(
         current_budget: Budget the slider sits at; drawn as a vertical marker.
         margin_factor: The margin factor the sweep was computed with. Only
             labels the chart — it cannot be verified from the data.
+        dashes: Optional per-strategy line style. Used on the channel-cost tab,
+            where `by_priority` and `optimal` share a colour family and need a
+            second visual cue to be told apart.
+        subtitle: Extra line under the title, e.g. the cost regime in force.
 
     Returns:
         A dark-themed Plotly figure.
     """
+    dashes = dashes or {}
     d = df_sweep.copy()
     d["net_value"] = d.expected_value - d.spend
 
@@ -52,7 +59,17 @@ def plot_value_curve_plotly(
                 y=series.net_value,
                 name=label,
                 mode="lines",
-                line={"color": strategy_colors[key], "width": 3.5, "shape": "spline"},
+                line={
+                    "color": strategy_colors[key],
+                    "width": 3.5,
+                    # Straight segments between real points. A spline overshoots
+                    # where the series stops rising and goes flat, drawing a peak
+                    # above the optimum's plateau that reads as "more budget
+                    # retains less" — which is false. Linear cannot invent
+                    # curvature the data does not have.
+                    "shape": "linear",
+                    "dash": dashes.get(key, "solid"),
+                },
                 hovertemplate=(
                     f"<b>{label}</b><br>"
                     "Budget: €%{x:,.0f}<br>"
@@ -75,7 +92,9 @@ def plot_value_curve_plotly(
                 "Net value retained by budget"
                 f"<br><span style='font-size:12px;color:{NEUTRAL}'>"
                 f"margin factor = {margin_factor} "
-                "(EUR of margin per EUR of revenue)</span>"
+                "(EUR of margin per EUR of revenue)"
+                + (f" · {subtitle}" if subtitle else "")
+                + "</span>"
             ),
             "font": {"size": 17, "color": TEXT},
             "y": 0.97,

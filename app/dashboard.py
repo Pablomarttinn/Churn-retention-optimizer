@@ -24,7 +24,7 @@ import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 import streamlit as st  # noqa: E402
 
-from app.components import render_decision_view  # noqa: E402
+from app.components import render_decision_view, sidebar_controls  # noqa: E402
 from app.theme import BG, CARD_BG, NEUTRAL, TEXT  # noqa: E402
 
 # The one file the app reads at runtime. Everything expensive — preprocess(),
@@ -86,4 +86,26 @@ st.caption(
 
 p, m, contract, ids = load_customers()
 
-render_decision_view("flat", p, m, contract, ids)
+# Sliders are created once, outside the tabs: Streamlit widgets cannot be
+# instantiated twice with the same identity, and both views are meant to answer
+# the same scenario anyway.
+params = sidebar_controls()
+
+flat_tab, channel_tab = st.tabs(["Flat cost", "Cost by channel"])
+
+with flat_tab:
+    st.caption(
+        "Every contact costs the same. The budget buys a fixed number of slots, "
+        "so ranking by risk × value is already the best you can do — the "
+        "knapsack would land on the same customers and is left off this tab."
+    )
+    render_decision_view("flat", p, m, contract, ids, params)
+
+with channel_tab:
+    st.caption(
+        "Reaching a month-to-month customer needs an expensive channel; a "
+        "two-year contract can be handled by a cheap automated touch. Once "
+        "contact costs differ, picking who to contact becomes a packing "
+        "problem and the optimiser stops agreeing with the ranking."
+    )
+    render_decision_view("channel", p, m, contract, ids, params)
